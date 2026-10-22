@@ -40,13 +40,13 @@ app.post("/api/route", async (req, res) => {
   let bestDifferenceM = Infinity;
   const targetM = Math.round(distanceKm * 1000);
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     const body = {
       coordinates: [[start.lon, start.lat]],
       options: {
         round_trip: {
           length: targetM,
-          points: [4, 6, 8][attempt],
+          points: [4, 6, 8, 5, 7][attempt],
           seed: Math.floor(Math.random() * 1000000)
         }
       },
