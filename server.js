@@ -38,7 +38,7 @@ app.post("/api/route", async (req, res) => {
     if (mode === "loop") {
       const body = {
         coordinates: [[start.lon, start.lat]],
-        options: { round_trip: { length: Math.round(distanceKm * 1000), points: 4, seed: Math.floor(Math.random() * 1000000) } },
+        options: { round_trip: { length: Math.round(distanceKm * 1000), points: 6, seed: Math.floor(Math.random() * 1000000) } },
         units: "m",
         elevation: true,
         instructions: true
