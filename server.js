@@ -59,6 +59,14 @@ app.post("/api/route", async (req, res) => {
       return res.status(502).json({ error: "Routingová služba nevrátila použitelnou trasu. Zkus jiný start nebo vzdálenost." });
     }
     const summary = feature.properties?.summary ?? {};
+    const actualDistanceKm = Number(summary.distance ?? 0) / 1000;
+const differencePct = Math.abs((actualDistanceKm - distanceKm) / distanceKm * 100);
+
+if (differencePct > 20) {
+  return res.status(422).json({
+    error: `Podařilo se najít trasu dlouhou ${actualDistanceKm.toFixed(2)} km, ale požadováno bylo ${distanceKm} km. Zkus to prosím znovu nebo změň výchozí místo.`
+  });
+}
     const segments = feature.properties?.segments ?? [];
     const ascent = Number(summary.ascent ?? 0);
     const descent = Number(summary.descent ?? 0);
