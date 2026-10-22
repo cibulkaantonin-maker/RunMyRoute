@@ -35,15 +35,52 @@ app.post("/api/route", async (req, res) => {
 
   try {
     let route;
-    if (mode === "loop") {
-      const body = {
-        coordinates: [[start.lon, start.lat]],
-        options: { round_trip: { length: Math.round(distanceKm * 1000), points: 6, seed: Math.floor(Math.random() * 1000000) } },
-        units: "m",
-        elevation: true,
-        instructions: true
-      };
-      route = await orsRequest("https://api.openrouteservice.org/v2/directions/foot-walking/geojson", body);
+   if (mode === "loop") {
+  let bestRoute = null;
+  let bestDifferenceM = Infinity;
+  const targetM = Math.round(distanceKm * 1000);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const body = {
+      coordinates: [[start.lon, start.lat]],
+      options: {
+        round_trip: {
+          length: targetM,
+          points: [4, 6, 8][attempt],
+          seed: Math.floor(Math.random() * 1000000)
+        }
+      },
+      units: "m",
+      elevation: true,
+      instructions: true
+    };
+
+    const candidate = await orsRequest(
+      "https://api.openrouteservice.org/v2/directions/foot-walking/geojson",
+      body
+    );
+
+    const candidateDistance = Number(
+      candidate.features?.[0]?.properties?.summary?.distance ?? 0
+    );
+
+    const differenceM = Math.abs(candidateDistance - targetM);
+
+    if (candidateDistance > 0 && differenceM < bestDifferenceM) {
+      bestRoute = candidate;
+      bestDifferenceM = differenceM;
+    }
+
+    if (bestDifferenceM <= targetM * 0.05) {
+      break;
+    }
+  }
+
+  if (!bestRoute) {
+    throw new Error("Nepodařilo se najít použitelný okruh. Zkus to znovu.");
+  }
+
+  route = bestRoute;
     } else {
       // A–B: generate a practical destination east/north of start; ORS snaps both points to routable foot paths.
       const latOffset = (distanceKm * 0.0065) / 1.11;
