@@ -77,10 +77,6 @@ app.post("/api/route", async (req, res) => {
       bestRoute = candidate;
       bestDifferenceM = differenceM;
     }
-
-    if (bestDifferenceM <= acceptableDifferenceM) {
-      break;
-    }
   }
 
   if (!bestRoute) {
