@@ -39,15 +39,18 @@ app.post("/api/route", async (req, res) => {
   let bestRoute = null;
   let bestDifferenceM = Infinity;
   const targetM = Math.round(distanceKm * 1000);
+  const maxAttempts = 10;
+  const acceptableDifferenceM = targetM * 0.05;
+  const baseSeed = Math.floor(Math.random() * 999990);
 
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const body = {
       coordinates: [[start.lon, start.lat]],
       options: {
         round_trip: {
           length: targetM,
-          points: [4, 6, 8, 5, 7][attempt],
-          seed: Math.floor(Math.random() * 1000000)
+          points: [4, 6, 8, 5, 7, 3, 9, 4, 7, 5][attempt],
+          seed: baseSeed + attempt
         }
       },
       units: "m",
@@ -64,20 +67,26 @@ app.post("/api/route", async (req, res) => {
       candidate.features?.[0]?.properties?.summary?.distance ?? 0
     );
 
+    if (!Number.isFinite(candidateDistance) || candidateDistance <= 0) {
+      continue;
+    }
+
     const differenceM = Math.abs(candidateDistance - targetM);
 
-    if (candidateDistance > 0 && differenceM < bestDifferenceM) {
+    if (differenceM < bestDifferenceM) {
       bestRoute = candidate;
       bestDifferenceM = differenceM;
     }
 
-    if (bestDifferenceM <= targetM * 0.05) {
+    if (bestDifferenceM <= acceptableDifferenceM) {
       break;
     }
   }
 
   if (!bestRoute) {
-    throw new Error("Nepodařilo se najít použitelný okruh. Zkus to znovu.");
+    throw new Error(
+      "Nepodařilo se najít použitelný okruh. Zkus jiné výchozí místo nebo vzdálenost."
+    );
   }
 
   route = bestRoute;
